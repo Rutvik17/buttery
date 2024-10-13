@@ -1,0 +1,73 @@
+doctype html
+html
+    head
+        title Twitch Dashboard
+        link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css')
+        style.
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+            }
+            .navbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background-color: #9147ff;
+                padding: 10px 20px;
+                color: white;
+            }
+            .navbar .title {
+                font-size: 24px;
+            }
+            .navbar .user-info {
+                display: flex;
+                align-items: center;
+            }
+            .navbar .user-info img {
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+            .navbar .logout-btn {
+                background-color: #ff4d4d;
+                border: none;
+                color: white;
+                padding: 5px 10px;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+            .profile-container {
+                max-width: 800px;
+                margin: 20px auto;
+                background-color: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+            .profile-container h2 {
+                margin-top: 0;
+            }
+            .profile-container .profile-item {
+                margin-bottom: 10px;
+            }
+    body
+        .navbar
+            .title Twitch Dashboard
+            .user-info
+                img(src=user.profile_image_url, alt='User Photo')
+                span= user.name
+                button.logout-btn(onclick="window.location.href='/logout'") Logout
+        .profile-container
+            h2 User Profile
+            .profile-item
+                strong Name: 
+                span= user.display_name
+            .profile-item
+                strong Email: 
+                span= user.email
+            .profile-item
+                strong View Count: 
+                span= user.view_count

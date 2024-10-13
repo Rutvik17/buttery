@@ -1,0 +1,6 @@
+{
+    "watch": ["src", "index.js"],
+    "ignore": ["node_modules"],
+    "ext": "js,jsx,ts,tsx",
+    "script": "index.js"
+}

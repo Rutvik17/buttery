@@ -1,0 +1,39 @@
+doctype html
+html
+    head
+        title Login with Twitch
+        style.
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f7f7f7;
+            }
+            .container {
+                text-align: center;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .twitch-button {
+                display: inline-block;
+                background-color: #6441a5;
+                color: #fff;
+                padding: 10px 20px;
+                border-radius: 5px;
+                text-decoration: none;
+                font-size: 16px;
+                font-weight: bold;
+                transition: background-color 0.3s;
+            }
+            .twitch-button:hover {
+                background-color: #503a85;
+            }
+    body
+        .container
+            h1 Login with Twitch
+            a.twitch-button(href="/auth/twitch") Login with Twitch
