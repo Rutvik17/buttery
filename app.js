@@ -6,6 +6,7 @@ require('dotenv').config();
 var mongoose = require('mongoose');
 var OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 var MongoDbStore = require('connect-mongodb-session')(session);
+var path = require('path');
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const TWITCH_SECRET    = process.env.TWITCH_SECRET;
@@ -13,7 +14,6 @@ const CALLBACK_URL     = process.env.CALLBACK_URL;
 const SESSION_SECRET   = process.env.SESSION_SECRET;
 
 var app = express();
-app.set('view engine', 'pug');
 
 mongoose.connect('mongodb://127.0.0.1:27017/', {})
 
@@ -29,9 +29,13 @@ app.use(session({
     })
 }));
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')))
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'))
+app.locals.basedir = app.get('views')
 
 OAuth2Strategy.prototype.userProfile = function(accessToken, done) {
     var options = {
@@ -75,9 +79,9 @@ passport.use('twitch', new OAuth2Strategy({
 
 app.get('/', function(req, res) {
     if (req.session && req.session.passport && req.session.passport.user) {
-        res.render('dashboard', { user: req.user });
+        res.render('pages/dashboard', { user: req.user });
     } else {
-        res.render('login', { user: null });
+        res.render('pages/login', { user: null });
     }
 });
 
