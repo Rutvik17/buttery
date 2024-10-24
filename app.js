@@ -1,106 +1,44 @@
-var express = require('express');
-var session = require('express-session');
-var passport = require('passport');
-var axios = require('axios');
+const express = require('express');
+const session = require('express-session');
+const path = require('path');
+const helmet = require('helmet');
+const connectDB = require('./config/db');
+const { session_config } = require('./config/session');
+const rateLimit = require('express-rate-limit');
+const passport = require('./config/passport_config');
 require('dotenv').config();
-var mongoose = require('mongoose');
-var OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
-var MongoDbStore = require('connect-mongodb-session')(session);
-var path = require('path');
 
-const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
-const TWITCH_SECRET    = process.env.TWITCH_SECRET;
-const CALLBACK_URL     = process.env.CALLBACK_URL;
-const SESSION_SECRET   = process.env.SESSION_SECRET;
+const auth_router = require('./routes/auth_routes');
+const user_router = require('./routes/user_routes');
 
 var app = express();
 
-mongoose.connect('mongodb://127.0.0.1:27017/', {})
+connectDB();
 
-app.use(session({
-    secret: SESSION_SECRET, 
-    resave: false, 
-    saveUninitialized: true,
-    store: new MongoDbStore({ 
-        mongooseConnection: mongoose.connection, 
-        collection: 'sessions', 
-        ttl: 72 * 60 * 24 * 7,
-        databaseName: 'crush-realm'
-    })
-}));
-
+app.use(session(session_config));
+app.use(express.json());
+app.use(helmet());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'styles')));
+
+
 app.use(passport.initialize());
 app.use(passport.session());
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    message: 'Too many requests, please try again later.',
+});
+app.use(limiter);
+
 app.set('view engine', 'pug');
-app.set('views', path.join(__dirname, 'views'))
-app.locals.basedir = app.get('views')
+app.set('views', path.join(__dirname, 'views'));
+app.locals.basedir = app.get('views');
 
-OAuth2Strategy.prototype.userProfile = function(accessToken, done) {
-    var options = {
-        url: 'https://api.twitch.tv/helix/users',
-        method: 'GET',
-        headers: {
-            'Client-ID': TWITCH_CLIENT_ID,
-            'Accept': 'application/vnd.twitchtv.v5+json',
-            'Authorization': 'Bearer ' + accessToken
-        }
-    };
-
-    axios(options).then(response => {
-        done(null, response.data.data[0]);
-    }).catch(error => { 
-        done(error);
-    });
-}
-
-passport.serializeUser(function(user, done) {
-    done(null, user);
-});
-
-passport.deserializeUser(function(user, done) {
-    done(null, user);
-});
-
-passport.use('twitch', new OAuth2Strategy({
-    authorizationURL: 'https://id.twitch.tv/oauth2/authorize',
-    tokenURL: 'https://id.twitch.tv/oauth2/token',
-    clientID: TWITCH_CLIENT_ID,
-    clientSecret: TWITCH_SECRET,
-    callbackURL: CALLBACK_URL,
-    state: true
-}, function(accessToken, refreshToken, profile, done) {
-    profile.accessToken = accessToken;
-    profile.refreshToken = refreshToken;
-
-    done(null, profile);
-}));
-
-app.get('/', function(req, res) {
-    if (req.session && req.session.passport && req.session.passport.user) {
-        res.render('pages/dashboard', { user: req.user });
-    } else {
-        res.render('pages/login', { user: null });
-    }
-});
-
-app.get('/auth/twitch', passport.authenticate('twitch', { scope: 'user_read' }));
-
-app.get('/auth/twitch/callback', passport.authenticate('twitch', { successRedirect: '/', failureRedirect: '/' }));
-
-app.get('/logout', function(req, res) {
-    req.session.destroy((err) => {
-        if (err) {
-            return console.log(err);
-        }
-        res.clearCookie('connect.sid');
-        for (let cookie in req.cookies) {
-            res.clearCookie(cookie);
-        }
-        res.redirect('/');
-    });
-});
+app.use('/auth', auth_router);
+app.use('/', user_router);
 
 app.listen(3000, function() {
     console.log('Listening on port 3000');
